@@ -11,6 +11,8 @@
             --secondary-color: #3f37c9;
             --dark-color: #2d2d44;
             --light-color: #f8f9fa;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
         }
 
         * {
@@ -36,12 +38,31 @@
             color: white;
             padding: 1.5rem 0;
             margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-container {
+            margin: 2rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .loading {
+            background: rgba(0, 123, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .error {
+            background: #f8d7da;
+            color: var(--danger-color);
+            border: 1px solid #f5c6cb;
         }
 
         .video-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.5rem;
+            margin-top: 1rem;
         }
 
         .video-card {
@@ -96,6 +117,8 @@
             align-items: center;
             gap: 0.5rem;
             transition: opacity 0.2s;
+            flex: 1;
+            justify-content: center;
         }
 
         .btn-primary {
@@ -103,9 +126,17 @@
             color: white;
         }
 
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
         .btn-secondary {
             background: #e9ecef;
             color: #495057;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
         }
 
         .modal {
@@ -132,12 +163,7 @@
         #videoPlayer {
             width: 100%;
             height: 450px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
+            background: black;
         }
 
         @media (max-width: 768px) {
@@ -149,6 +175,14 @@
                 height: 300px;
             }
         }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -159,12 +193,12 @@
     </header>
 
     <main class="container">
-        <div class="video-grid" id="videoGrid">
-            <div class="loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                正在加载视频列表...
-            </div>
+        <div id="statusContainer" class="status-container loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            正在加载视频列表...
         </div>
+
+        <div class="video-grid" id="videoGrid"></div>
     </main>
 
     <div class="modal" id="videoModal">
@@ -179,32 +213,89 @@
     </div>
 
     <script>
-        // 视频数据加载
-        async function loadVideos() {
-            try {
-                const response = await fetch('videos.json');
-                if (!response.ok) throw new Error('网络响应异常');
-                
-                const videos = await response.json();
-                renderVideos(videos);
-            } catch (error) {
-                console.error('加载失败:', error);
-                document.getElementById('videoGrid').innerHTML = `
-                    <div class="loading">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        视频加载失败，请刷新重试
-                    </div>
+        // 状态管理对象
+        const state = {
+            videos: [],
+            currentVideo: null,
+            error: null
+        };
+
+        // DOM 元素
+        const dom = {
+            status: document.getElementById('statusContainer'),
+            grid: document.getElementById('videoGrid'),
+            modal: document.getElementById('videoModal'),
+            player: document.getElementById('videoPlayer')
+        };
+
+        // 状态处理器
+        const statusHandler = {
+            loading() {
+                dom.status.className = 'status-container loading';
+                dom.status.innerHTML = `
+                    <i class="fas fa-spinner fa-spin"></i>
+                    正在加载视频列表...
                 `;
+            },
+            success() {
+                dom.status.style.display = 'none';
+            },
+            error(message) {
+                dom.status.className = 'status-container error';
+                dom.status.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message || '视频加载失败，请刷新重试'}
+                `;
+            }
+        };
+
+        // 初始化加载
+        async function initialize() {
+            statusHandler.loading();
+            
+            try {
+                // 1. 加载视频清单
+                const response = await fetch('videos.json');
+                
+                // 检查HTTP状态
+                if (!response.ok) {
+                    throw new Error(`HTTP错误 ${response.status}`);
+                }
+
+                // 2. 解析JSON数据
+                state.videos = await response.json();
+                
+                // 3. 验证数据结构
+                if (!validateVideoData(state.videos)) {
+                    throw new Error('视频数据格式错误');
+                }
+
+                // 4. 渲染界面
+                renderVideoGrid();
+                statusHandler.success();
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                statusHandler.error(error.message);
             }
         }
 
-        // 渲染视频列表
-        function renderVideos(videos) {
-            const grid = document.getElementById('videoGrid');
-            grid.innerHTML = videos.map(video => `
-                <div class="video-card" data-id="${video.id}">
+        // 数据验证
+        function validateVideoData(videos) {
+            return Array.isArray(videos) && 
+                videos.every(v => 
+                    typeof v.id === 'number' && 
+                    typeof v.name === 'string'
+                );
+        }
+
+        // 渲染视频网格
+        function renderVideoGrid() {
+            dom.grid.innerHTML = state.videos.map(video => `
+                <div class="video-card">
                     <div class="video-thumbnail">
-                        <img src="https://via.placeholder.com/400x225?text=${video.name}" alt="${video.name}">
+                        <img src="https://via.placeholder.com/400x225?text=${encodeURIComponent(video.name)}" 
+                             alt="${video.name}">
                     </div>
                     <div class="video-info">
                         <div class="video-title">${video.name}</div>
@@ -223,37 +314,57 @@
 
         // 播放视频
         function playVideo(filename) {
-            const modal = document.getElementById('videoModal');
-            const player = document.getElementById('videoPlayer');
-            
-            player.src = filename;
-            player.load();
-            modal.style.display = 'flex';
-            player.play();
+            try {
+                // 验证文件存在性
+                const videoExists = state.videos.some(v => v.name === filename);
+                if (!videoExists) throw new Error('视频文件不存在');
+
+                dom.player.src = filename;
+                dom.modal.style.display = 'flex';
+                dom.player.play().catch(error => {
+                    throw new Error('视频播放失败: ' + error.message);
+                });
+                
+            } catch (error) {
+                alert(error.message);
+            }
         }
 
         // 关闭播放器
         function closePlayer() {
-            const modal = document.getElementById('videoModal');
-            const player = document.getElementById('videoPlayer');
-            
-            player.pause();
-            player.currentTime = 0;
-            modal.style.display = 'none';
+            dom.player.pause();
+            dom.player.currentTime = 0;
+            dom.modal.style.display = 'none';
         }
 
         // 下载视频
-        function downloadVideo(filename) {
-            const link = document.createElement('a');
-            link.href = filename;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        async function downloadVideo(filename) {
+            try {
+                // 验证文件存在性
+                const videoExists = state.videos.some(v => v.name === filename);
+                if (!videoExists) throw new Error('文件不存在');
+
+                const link = document.createElement('a');
+                link.href = filename;
+                link.download = filename;
+                
+                // 添加超时处理
+                const timer = setTimeout(() => {
+                    throw new Error('下载超时');
+                }, 5000);
+
+                link.onclick = () => clearTimeout(timer);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                alert(error.message);
+            }
         }
 
-        // 初始化加载
-        document.addEventListener('DOMContentLoaded', loadVideos);
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
