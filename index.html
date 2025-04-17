@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>クラスの痛写真</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+     <style>
+        .footer {
+            background: var(--dark-color);
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+        }
+
+    </style>
     <style>
         :root {
             --primary-color: #4361ee;
@@ -200,7 +222,11 @@
 
         <div class="video-grid" id="videoGrid"></div>
     </main>
-
+     <footer class="footer">
+        <div class="container">
+            Tangle TEAM(C) Images form Friends
+        </div>
+    </footer>
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <video controls id="videoPlayer"></video>
