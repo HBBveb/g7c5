@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视频下载中心</title>
+    <title>多媒体资源中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -38,29 +38,14 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .video-grid {
+        .media-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
             margin-top: 2rem;
         }
 
-        .video-card {
+        .media-card {
             background: white;
             border-radius: 12px;
             overflow: hidden;
@@ -68,43 +53,37 @@
             transition: transform 0.2s ease;
         }
 
-        .video-card:hover {
+        .media-card:hover {
             transform: translateY(-5px);
         }
 
-        .video-thumbnail {
-            height: 200px;
+        .media-preview {
+            height: 250px;
             background: #eee;
             position: relative;
         }
 
-        .thumbnail-image {
+        .media-content {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .video-info {
+        .media-info {
             padding: 1.2rem;
         }
 
-        .video-title {
+        .media-title {
             font-weight: 600;
             margin-bottom: 0.8rem;
             color: var(--dark-color);
+            word-break: break-all;
         }
 
-        .video-meta {
-            display: flex;
-            justify-content: space-between;
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .video-actions {
+        .media-actions {
             display: flex;
             gap: 0.8rem;
+            justify-content: space-between;
         }
 
         .btn {
@@ -123,13 +102,34 @@
             color: white;
         }
 
-        .btn-secondary {
-            background: #e9ecef;
-            color: #333;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #fullscreenPlayer {
+            width: 100%;
+            height: 70vh;
         }
 
         @media (max-width: 768px) {
-            .video-grid {
+            .media-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -137,103 +137,176 @@
 </head>
 <body>
     <header>
-        <div class="container header-content">
-            <div class="logo">
-                <i class="fas fa-download"></i>
-                <span>视频下载中心</span>
-            </div>
+        <div class="container">
+            <h1><i class="fas fa-photo-video"></i> 多媒体资源库</h1>
         </div>
     </header>
 
     <main class="container">
-        <div class="video-grid" id="videoGrid">
-            <!-- 视频卡片动态生成 -->
+        <div class="media-grid" id="mediaGrid">
+            <!-- 媒体文件动态加载 -->
         </div>
     </main>
 
+    <div class="modal" id="mediaModal">
+        <div class="modal-content">
+            <div class="media-preview">
+                <video controls id="fullscreenPlayer" class="media-content"></video>
+                <img id="fullscreenImage" class="media-content" style="display: none;">
+            </div>
+            <div class="media-info">
+                <h2 id="mediaTitle" class="media-title"></h2>
+                <div class="media-actions">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> 下载
+                    </button>
+                    <button class="btn" onclick="closeModal()">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 视频文件列表（根据实际文件修改）
-        const videoFiles = [
-            { 
-                filename: '2.mp4',
-                title: '精彩视频2',
-                description: '高清自然风光纪录片',
-                thumbnail: 'https://via.placeholder.com/300x200/4361ee/ffffff?text=Video+2',
-                duration: '12:30'
-            },
-            { 
-                filename: '3.mp4',
-                title: '教学视频3',
-                description: '编程教学课程',
-                thumbnail: 'https://via.placeholder.com/300x200/3f37c9/ffffff?text=Video+3',
-                duration: '08:45'
-            },
-            { 
-                filename: '4.mp4',
-                title: '产品演示4',
-                description: '最新产品功能展示',
-                thumbnail: 'https://via.placeholder.com/300x200/1a1a2e/ffffff?text=Video+4',
-                duration: '05:20'
+        // 自动扫描媒体文件
+        class MediaScanner {
+            constructor() {
+                this.mediaExtensions = [
+                    '.jpg', '.jpeg', '.png', '.gif', 
+                    '.mp4', '.webm', '.mov'
+                ];
+                this.mediaList = [];
+                this.currentMedia = null;
             }
-        ];
 
-        // 获取文件大小（需要服务器支持）
-        async function getFileSize(filename) {
-            try {
-                const response = await fetch(filename, { method: 'HEAD' });
-                const size = response.headers.get('Content-Length');
-                return (size / (1024 * 1024)).toFixed(1) + ' MB';
-            } catch {
-                return 'N/A';
+            async scanMediaFiles() {
+                try {
+                    // 获取当前目录下的文件列表（需要服务器支持）
+                    const response = await fetch('./?json');
+                    const text = await response.text();
+                    const files = this.parseDirectoryListing(text);
+                    
+                    this.mediaList = files
+                        .filter(file => this.isMediaFile(file))
+                        .map((file, index) => ({
+                            id: index + 1,
+                            filename: file,
+                            type: this.getFileType(file),
+                            url: encodeURI(file)
+                        }));
+                    
+                    this.renderMedia();
+                } catch (error) {
+                    console.error('扫描失败:', error);
+                    this.mediaList = this.getFallbackList();
+                    this.renderMedia();
+                }
             }
-        }
 
-        // 生成视频卡片
-        async function renderVideos() {
-            const videoGrid = document.getElementById('videoGrid');
-            
-            for (const video of videoFiles) {
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                
-                // 获取文件大小
-                const fileSize = await getFileSize(video.filename);
-                
-                card.innerHTML = `
-                    <div class="video-thumbnail">
-                        <img src="${video.thumbnail}" alt="${video.title}" class="thumbnail-image">
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">${video.title}</h3>
-                        <div class="video-meta">
-                            <span>${video.duration}</span>
-                            <span>${fileSize}</span>
+            parseDirectoryListing(text) {
+                // 解析目录列表（根据服务器格式调整）
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                return Array.from(doc.querySelectorAll('a'))
+                    .map(a => a.href.split('/').pop())
+                    .filter(file => !file.endsWith('/'));
+            }
+
+            isMediaFile(filename) {
+                const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+                return this.mediaExtensions.includes(ext);
+            }
+
+            getFileType(filename) {
+                const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+                return ext === '.mp4' || ext === '.webm' || ext === '.mov' 
+                    ? 'video' 
+                    : 'image';
+            }
+
+            getFallbackList() {
+                // 备用列表（当自动扫描失败时使用）
+                return [
+                    { id: 1, filename: '2.mp4', type: 'video' },
+                    { id: 2, filename: '3.mp4', type: 'video' },
+                    { id: 3, filename: '4.mp4', type: 'video' }
+                ].map(item => ({
+                    ...item,
+                    url: item.filename
+                }));
+            }
+
+            renderMedia() {
+                const grid = document.getElementById('mediaGrid');
+                grid.innerHTML = this.mediaList.map(media => `
+                    <div class="media-card" data-id="${media.id}">
+                        <div class="media-preview" onclick="mediaScanner.showMedia(${media.id})">
+                            ${media.type === 'video' ? `
+                                <video class="media-content" muted loop>
+                                    <source src="${media.url}" type="video/mp4">
+                                </video>
+                            ` : `
+                                <img class="media-content" src="${media.url}" alt="${media.filename}">
+                            `}
                         </div>
-                        <div class="video-actions">
-                            <button class="btn btn-primary" onclick="downloadVideo('${video.filename}')">
-                                <i class="fas fa-download"></i>
-                                下载
-                            </button>
+                        <div class="media-info">
+                            <h3 class="media-title">${media.filename}</h3>
+                            <div class="media-actions">
+                                <button class="btn btn-primary" onclick="downloadFile('${media.url}')">
+                                    <i class="fas fa-download"></i> 下载
+                                </button>
+                            </div>
                         </div>
                     </div>
-                `;
+                `).join('');
+            }
+
+            showMedia(id) {
+                this.currentMedia = this.mediaList.find(m => m.id === id);
+                const modal = document.getElementById('mediaModal');
+                const player = document.getElementById('fullscreenPlayer');
+                const image = document.getElementById('fullscreenImage');
                 
-                videoGrid.appendChild(card);
+                if (this.currentMedia.type === 'video') {
+                    player.style.display = 'block';
+                    image.style.display = 'none';
+                    player.src = this.currentMedia.url;
+                    player.play();
+                } else {
+                    player.style.display = 'none';
+                    image.style.display = 'block';
+                    image.src = this.currentMedia.url;
+                }
+                
+                document.getElementById('mediaTitle').textContent = this.currentMedia.filename;
+                modal.style.display = 'flex';
             }
         }
 
         // 下载功能
-        function downloadVideo(filename) {
+        function downloadFile(url) {
             const link = document.createElement('a');
-            link.href = filename;
-            link.download = filename;
+            link.href = url;
+            link.download = url.split('/').pop();
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('mediaModal').style.display = 'none';
+            const player = document.getElementById('fullscreenPlayer');
+            player.pause();
+            player.currentTime = 0;
+        }
+
         // 初始化
-        document.addEventListener('DOMContentLoaded', renderVideos);
+        const mediaScanner = new MediaScanner();
+        document.addEventListener('DOMContentLoaded', () => {
+            mediaScanner.scanMediaFiles();
+        });
     </script>
 </body>
 </html>
