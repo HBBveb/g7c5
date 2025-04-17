@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频资源中心 - 专业视频下载平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --dark-color: #1a1a2e;
+            --light-color: #f8f9fa;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+        }
+
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+        }
+
+        /* 容器布局 */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部样式 */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        /* 搜索栏 */
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 视频网格布局 */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        /* 视频卡片 */
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            height: 180px;
+            background: #eee;
+            overflow: hidden;
+        }
+
+        .thumbnail-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .video-card:hover .thumbnail-image {
+            transform: scale(1.05);
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 0.8rem;
+            right: 0.8rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* 视频信息 */
+        .video-info {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            overflow: hidden;
+            animation: modalShow 0.3s ease;
+        }
+
+        @keyframes modalShow {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+            }
+
+            .search-container {
+                width: 100%;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-download"></i>
+                <span>视频下载中心</span>
+            </div>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="搜索视频..."
+                    id="searchInput"
+                >
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="video-grid" id="videoGrid">
+            <!-- 动态加载视频 -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                加载中...
+            </div>
+        </div>
+    </main>
+
+    <!-- 视频详情模态框 -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <div class="video-player">
+                <video controls id="videoPlayer" class="w-100"></video>
+            </div>
+            <div class="video-info p-3">
+                <h3 id="videoTitle" class="mb-2"></h3>
+                <div class="video-details">
+                    <div class="detail-item">
+                        <span>分辨率：</span>
+                        <span id="videoResolution"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span>文件大小：</span>
+                        <span id="videoSize"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span>格式：</span>
+                        <span id="videoFormat"></span>
+                    </div>
+                </div>
+                <div class="video-actions mt-3">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> 下载视频
+                    </button>
+                    <button class="btn btn-secondary" id="closeModal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 视频服务API端点
+        const API_ENDPOINT = {
+            videos: '/api/videos',
+            download: '/api/download'
+        };
+
+        class VideoService {
+            static async fetchVideos(searchTerm = '') {
+                try {
+                    const response = await fetch(`${API_ENDPOINT.videos}?q=${encodeURIComponent(searchTerm)}`);
+                    return await response.json();
+                } catch (error) {
+                    console.error('获取视频失败:', error);
+                    return [];
+                }
+            }
+
+            static async getVideoDetails(videoId) {
+                try {
+                    const response = await fetch(`${API_ENDPOINT.videos}/${videoId}`);
+                    return await response.json();
+                } catch (error) {
+                    console.error('获取视频详情失败:', error);
+                    return null;
+                }
+            }
+
+            static async downloadVideo(videoId) {
+                try {
+                    const response = await fetch(`${API_ENDPOINT.download}/${videoId}`);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video-${videoId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } catch (error) {
+                    console.error('下载失败:', error);
+                    alert('视频下载失败，请稍后重试');
+                }
+            }
+        }
+
+        class VideoUI {
+            constructor() {
+                this.videoGrid = document.getElementById('videoGrid');
+                this.searchInput = document.getElementById('searchInput');
+                this.videoModal = document.getElementById('videoModal');
+                this.videoPlayer = document.getElementById('videoPlayer');
+                this.videoTitle = document.getElementById('videoTitle');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.closeModalBtn = document.getElementById('closeModal');
+                this.currentVideo = null;
+
+                this.initializeEventListeners();
+                this.loadVideos();
+            }
+
+            async loadVideos() {
+                this.showLoading();
+                const videos = await VideoService.fetchVideos();
+                this.renderVideos(videos);
+            }
+
+            renderVideos(videos) {
+                this.videoGrid.innerHTML = videos.map(video => `
+                    <div class="video-card">
+                        <div class="video-thumbnail">
+                            <img 
+                                src="${video.thumbnail}" 
+                                alt="${video.title}" 
+                                class="thumbnail-image"
+                            >
+                            <div class="video-duration">${video.duration}</div>
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title">${video.title}</h3>
+                            <div class="video-meta">
+                                <span>${video.views} 次观看</span>
+                                <span>${video.size}</span>
+                            </div>
+                            <div class="video-actions">
+                                <button 
+                                    class="btn btn-primary" 
+                                    data-video-id="${video.id}"
+                                    onclick="videoUI.showVideoDetail('${video.id}')"
+                                >
+                                    <i class="fas fa-info-circle"></i> 详情
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async showVideoDetail(videoId) {
+                this.currentVideo = await VideoService.getVideoDetails(videoId);
+                if (!this.currentVideo) return;
+
+                this.videoTitle.textContent = this.currentVideo.title;
+                this.videoPlayer.src = this.currentVideo.url;
+                this.videoModal.style.display = 'flex';
+            }
+
+            initializeEventListeners() {
+                // 搜索功能
+                this.searchInput.addEventListener('input', () => {
+                    const searchTerm = this.searchInput.value.trim();
+                    this.loadVideos(searchTerm);
+                });
+
+                // 下载按钮
+                this.downloadBtn.addEventListener('click', () => {
+                    if (this.currentVideo) {
+                        VideoService.downloadVideo(this.currentVideo.id);
+                    }
+                });
+
+                // 关闭模态框
+                this.closeModalBtn.addEventListener('click', () => {
+                    this.videoModal.style.display = 'none';
+                    this.videoPlayer.pause();
+                });
+            }
+
+            showLoading() {
+                this.videoGrid.innerHTML = `
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        加载中...
+                    </div>
+                `;
+            }
+        }
+
+        // 初始化应用
+        const videoUI = new VideoUI();
+    </script>
+</body>
+</html>
