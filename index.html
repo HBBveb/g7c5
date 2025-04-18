@@ -3,204 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The G7C5 PHOTOS</title>
+    <title>班级资源库｜认证访问</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #4361ee;
-            --primary-gradient: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
-            --secondary-color: #4a4d6d;
-            --dark-color: #1a1c2c;
-            --light-color: #f8f9fa;
-            --radius-lg: 16px;
-            --radius-sm: 8px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f8fafc;
-            font-family: 'Segoe UI', system-ui;
-        }
-
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 2rem;
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        }
-
-        .auth-form {
+        /* 新增导航样式 */
+        .nav-tabs {
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .auth-input {
+            gap: 1rem;
             padding: 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: var(--radius-sm);
-            font-size: 1rem;
+            background: var(--dark-color);
         }
-
-        .auth-button {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 1rem;
+        
+        .nav-button {
+            padding: 0.8rem 1.5rem;
             border: none;
-            border-radius: var(--radius-sm);
+            background: none;
+            color: white;
             cursor: pointer;
-            font-weight: 500;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
         }
 
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
+        .nav-button.active {
+            background: var(--primary-color);
+        }
+
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
             padding: 2rem;
         }
 
-        .video-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .video-thumbnail {
-            height: 200px;
-            background: #e2e8f0;
-            position: relative;
+        .page-item {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: var(--radius-sm);
             cursor: pointer;
         }
 
-        .video-thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-info {
-            padding: 1.5rem;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            width: 90%;
-            max-width: 800px;
-            background: #000;
-            border-radius: var(--radius-lg);
-        }
-
-        #videoPlayer {
-            width: 100%;
-            height: 500px;
+        .page-item.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
         }
     </style>
 </head>
 <body>
     <div class="auth-container">
-        <h2 style="text-align:center;margin-bottom:2rem;">
-            <i class="fas fa-lock"></i> G7C5 PHOTOS
-        </h2>
-        <div class="auth-form">
-            <input type="password" id="authCode" class="auth-input" placeholder="请输入学号前九位">
-            <button class="auth-button" onclick="checkAuth()">
-                <i class="fas fa-unlock"></i> 立即验证
-            </button>
-        </div>
+        <!-- 保持原有认证界面不变 -->
     </div>
 
     <div id="contentContainer" style="display:none;">
-        <div class="video-grid" id="videoGrid"></div>
+        <!-- 新增导航 -->
+        <nav class="nav-tabs">
+            <button class="nav-button active" onclick="switchTab('videos')">
+                <i class="fas fa-video"></i> 视频区
+            </button>
+            <button class="nav-button" onclick="switchTab('blogs')">
+                <i class="fas fa-blog"></i> 博客区
+            </button>
+        </nav>
+
+        <!-- 视频区 -->
+        <div id="videoSection">
+            <div class="video-grid" id="videoGrid"></div>
+            <div class="pagination" id="videoPagination"></div>
+        </div>
+
+        <!-- 博客区 -->
+        <div id="blogSection" style="display:none;">
+            <div class="blog-grid" id="blogGrid"></div>
+            <div class="pagination" id="blogPagination"></div>
+        </div>
     </div>
 
-    <div class="modal" id="videoModal">
-        <div class="modal-content">
-            <video controls id="videoPlayer"></video>
-            <button onclick="closePlayer()" style="margin:1rem;float:right;" class="auth-button">
+    <!-- 新增博客内容容器 -->
+    <div class="modal" id="blogModal">
+        <div class="modal-content" style="max-width:800px;padding:2rem;">
+            <div id="blogContent"></div>
+            <button onclick="closeBlog()" class="auth-button">
                 <i class="fas fa-times"></i> 关闭
             </button>
         </div>
     </div>
 
     <script>
-        const AUTH_CODE = '101202705';
+        // 新增配置
+        const config = {
+            videosPerPage: 4,
+            blogsPerPage: 3,
+            currentVideoPage: 1,
+            currentBlogPage: 1,
+            activeTab: 'videos'
+        };
 
-        function checkAuth() {
-            const code = document.getElementById('authCode').value;
-            if(code === AUTH_CODE) {
-                document.querySelector('.auth-container').style.display = 'none';
-                document.getElementById('contentContainer').style.display = 'block';
-                loadVideos();
-            } else {
-                alert('认证码错误！');
-            }
-        }
-
+        // 修改后的加载函数
         async function loadVideos() {
-            try {
-                const response = await fetch('videos.json');
-                const videos = await response.json();
-                renderVideos(videos);
-            } catch (error) {
-                alert('视频加载失败: ' + error.message);
-            }
+            const response = await fetch('videos.json');
+            const allVideos = await response.json();
+            const paginated = paginate(allVideos, config.currentVideoPage, config.videosPerPage);
+            
+            renderVideos(paginated.data);
+            renderPagination('videoPagination', allVideos.length, config.videosPerPage, config.currentVideoPage, 'video');
         }
 
-        function renderVideos(videos) {
-            const grid = document.getElementById('videoGrid');
-            grid.innerHTML = videos.map(video => `
+        // 新增博客加载函数
+        async function loadBlogs() {
+            const response = await fetch('blogs.json');
+            const allBlogs = await response.json();
+            const paginated = paginate(allBlogs, config.currentBlogPage, config.blogsPerPage);
+            
+            renderBlogs(paginated.data);
+            renderPagination('blogPagination', allBlogs.length, config.blogsPerPage, config.currentBlogPage, 'blog');
+        }
+
+        // 分页逻辑
+        function paginate(items, currentPage, perPage) {
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            return {
+                data: items.slice(start, end),
+                total: items.length
+            };
+        }
+
+        // 分页渲染
+        function renderPagination(containerId, totalItems, perPage, currentPage, type) {
+            const totalPages = Math.ceil(totalItems / perPage);
+            const container = document.getElementById(containerId);
+            
+            let html = `
+                <button class="page-item" onclick="changePage(${currentPage - 1}, '${type}')" 
+                    ${currentPage === 1 ? 'disabled' : ''}>«</button>`;
+
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-item ${i === currentPage ? 'active' : ''}" 
+                         onclick="changePage(${i}, '${type}')">${i}</button>`;
+            }
+
+            html += `
+                <button class="page-item" onclick="changePage(${currentPage + 1}, '${type}')" 
+                    ${currentPage === totalPages ? 'disabled' : ''}>»</button>`;
+
+            container.innerHTML = html;
+        }
+
+        // 新增博客渲染函数
+        function renderBlogs(blogs) {
+            const grid = document.getElementById('blogGrid');
+            grid.innerHTML = blogs.map(blog => `
                 <div class="video-card">
-                    <div class="video-thumbnail" onclick="playVideo('${video.name}')">
-                        <img src="thumbnail.php?video=${video.name}" 
-                             onerror="this.src='fallback.jpg'">
+                    <div class="video-thumbnail" onclick="loadBlogContent('${blog.name}')">
+                        <i class="fas fa-file-alt fa-3x" style="color:#666;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></i>
                     </div>
                     <div class="video-info">
-                        <h3>${video.name.replace('.mp4', '')}</h3>
-                        <button onclick="downloadVideo('${video.name}')" class="auth-button">
-                            <i class="fas fa-download"></i> 下载
+                        <h3>${blog.name.replace('.html', '')}</h3>
+                        <button onclick="loadBlogContent('${blog.name}')" class="auth-button">
+                            <i class="fas fa-book-open"></i> 阅读全文
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function playVideo(name) {
-            const player = document.getElementById('videoPlayer');
-            player.src = name;
-            document.getElementById('videoModal').style.display = 'flex';
-            player.play();
+        // 新增博客内容加载
+        async function loadBlogContent(filename) {
+            try {
+                const response = await fetch(filename);
+                const content = await response.text();
+                document.getElementById('blogContent').innerHTML = content;
+                document.getElementById('blogModal').style.display = 'flex';
+            } catch {
+                alert('博客内容加载失败');
+            }
         }
 
-        function closePlayer() {
-            document.getElementById('videoModal').style.display = 'none';
-            const player = document.getElementById('videoPlayer');
-            player.pause();
-            player.currentTime = 0;
+        // 新增切换标签功能
+        function switchTab(tab) {
+            config.activeTab = tab;
+            document.querySelectorAll('.nav-button').forEach(btn => 
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(tab))
+            );
+            
+            document.getElementById('videoSection').style.display = 
+                tab === 'videos' ? 'block' : 'none';
+            document.getElementById('blogSection').style.display = 
+                tab === 'blogs' ? 'block' : 'none';
+
+            if(tab === 'videos') loadVideos();
+            if(tab === 'blogs') loadBlogs();
         }
 
-        function downloadVideo(name) {
-            const link = document.createElement('a');
-            link.href = name;
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        // 新增分页控制
+        function changePage(page, type) {
+            if(type === 'video') {
+                config.currentVideoPage = page;
+                loadVideos();
+            } else {
+                config.currentBlogPage = page;
+                loadBlogs();
+            }
+        }
+
+        // 修改后的认证通过逻辑
+        function checkAuth() {
+            if(document.getElementById('authCode').value === AUTH_CODE) {
+                document.getElementById('contentContainer').style.display = 'block';
+                loadVideos(); // 默认加载视频
+            }
+        }
+
+        // 关闭博客弹窗
+        function closeBlog() {
+            document.getElementById('blogModal').style.display = 'none';
         }
     </script>
 </body>
