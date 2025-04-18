@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The G7C5 PHOTOS</title>
+    <title>班级资源库｜认证访问</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #4361ee;
-            --primary-gradient: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
             --secondary-color: #4a4d6d;
             --dark-color: #1a1c2c;
             --light-color: #f8f9fa;
             --radius-lg: 16px;
             --radius-sm: 8px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -54,7 +52,7 @@
         }
 
         .auth-button {
-            background: var(--primary-gradient);
+            background: var(--primary-color);
             color: white;
             padding: 1rem;
             border: none;
@@ -83,7 +81,7 @@
             color: white;
             cursor: pointer;
             border-radius: var(--radius-sm);
-            transition: var(--transition);
+            transition: 0.3s;
         }
 
         .nav-button.active {
@@ -94,10 +92,13 @@
         .content-section {
             display: none;
             padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .content-section.active {
             display: block;
+            opacity: 1;
         }
 
         /* 网格布局 */
@@ -177,6 +178,12 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+        }
     </style>
 </head>
 <body>
@@ -186,7 +193,7 @@
             <i class="fas fa-lock"></i> 班级资源库
         </h2>
         <div class="auth-form">
-            <input type="password" id="authCode" class="auth-input" placeholder="请输入学号前九位" autocomplete="off">
+            <input type="password" id="authCode" class="auth-input" placeholder="请输入访问密码" autocomplete="off">
             <button class="auth-button" onclick="checkAuth()">
                 <i class="fas fa-unlock-alt"></i> 立即验证
             </button>
@@ -246,12 +253,10 @@
         const CONFIG = {
             authCode: '101202705',
             videosPerPage: 4,
-            blogsPerPage: 3,
-            currentVideoPage: 1,
-            currentBlogPage: 1
+            blogsPerPage: 3
         };
 
-        // 初始化
+        // 认证检查
         function checkAuth() {
             const input = document.getElementById('authCode');
             if(input.value === CONFIG.authCode) {
@@ -266,53 +271,61 @@
             }
         }
 
-        // 标签页初始化
+        // 初始化标签页
         function initTabs() {
             document.querySelectorAll('.nav-button').forEach(btn => {
                 btn.addEventListener('click', () => {
+                    // 移除所有激活状态
                     document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
+                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
                     
-                    document.querySelectorAll('.content-section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-
+                    // 设置新状态
                     const tab = btn.dataset.tab;
+                    btn.classList.add('active');
                     document.getElementById(`${tab}Section`).classList.add('active');
                     
-                    if(tab === 'videos' && !document.getElementById('videoGrid').innerHTML) loadVideos();
-                    if(tab === 'blogs' && !document.getElementById('blogGrid').innerHTML) loadBlogs();
+                    // 加载内容
+                    if(tab === 'videos' && !document.getElementById('videoGrid').innerHTML) {
+                        loadVideos();
+                    }
+                    if(tab === 'blogs' && !document.getElementById('blogGrid').innerHTML) {
+                        loadBlogs();
+                    }
                 });
             });
         }
 
-        // 视频加载
+        // 加载视频
         async function loadVideos(page = 1) {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = '<div class="loading">加载视频中...</div>';
+            
             try {
-                CONFIG.currentVideoPage = page;
                 const res = await fetch('videos.json');
                 const allVideos = await res.json();
-                
                 const paginated = paginate(allVideos, page, CONFIG.videosPerPage);
+                
                 renderVideos(paginated.data);
                 renderPagination('videoPagination', allVideos.length, CONFIG.videosPerPage, page, 'videos');
             } catch (error) {
-                alert('视频加载失败: ' + error.message);
+                grid.innerHTML = '<div class="loading">视频加载失败</div>';
             }
         }
 
-        // 博客加载
+        // 加载博客
         async function loadBlogs(page = 1) {
+            const grid = document.getElementById('blogGrid');
+            grid.innerHTML = '<div class="loading">加载博客中...</div>';
+            
             try {
-                CONFIG.currentBlogPage = page;
                 const res = await fetch('blogs.json');
                 const allBlogs = await res.json();
-                
                 const paginated = paginate(allBlogs, page, CONFIG.blogsPerPage);
+                
                 renderBlogs(paginated.data);
                 renderPagination('blogPagination', allBlogs.length, CONFIG.blogsPerPage, page, 'blogs');
             } catch (error) {
-                alert('博客加载失败: ' + error.message);
+                grid.innerHTML = '<div class="loading">博客加载失败</div>';
             }
         }
 
@@ -332,30 +345,28 @@
             const container = document.getElementById(containerId);
             
             let html = `
-                <button class="page-item" onclick="handlePagination('prev', '${type}')" 
+                <button class="page-item" onclick="changePage('prev', '${type}')" 
                     ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
 
             for(let i = 1; i <= totalPages; i++) {
                 html += `
                     <button class="page-item ${i === currentPage ? 'active' : ''}" 
-                        onclick="handlePagination(${i}, '${type}')">${i}</button>`;
+                        onclick="changePage(${i}, '${type}')">${i}</button>`;
             }
 
             html += `
-                <button class="page-item" onclick="handlePagination('next', '${type}')" 
+                <button class="page-item" onclick="changePage('next', '${type}')" 
                     ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
 
             container.innerHTML = html;
         }
 
         // 分页处理
-        function handlePagination(action, type) {
-            let newPage = type === 'videos' ? CONFIG.currentVideoPage : CONFIG.currentBlogPage;
+        function changePage(action, type) {
+            let newPage = action;
+            if(action === 'prev') newPage = parseInt(type === 'videos' ? CONFIG.currentVideoPage : CONFIG.currentBlogPage) - 1;
+            if(action === 'next') newPage = parseInt(type === 'videos' ? CONFIG.currentVideoPage : CONFIG.currentBlogPage) + 1;
             
-            if(action === 'prev') newPage--;
-            else if(action === 'next') newPage++;
-            else newPage = action;
-
             if(type === 'videos') {
                 loadVideos(newPage);
             } else {
@@ -369,8 +380,7 @@
             grid.innerHTML = videos.map(video => `
                 <div class="card">
                     <div class="thumbnail" onclick="playVideo('${video.name}')">
-                        <img src="thumbnail.php?video=${video.name}" 
-                             onerror="this.src='fallback.jpg'">
+                        <img src="thumbnail.php?video=${video.name}" onerror="this.src='fallback.jpg'">
                     </div>
                     <div class="card-content">
                         <h3>${video.name.replace('.mp4', '')}</h3>
@@ -403,7 +413,7 @@
             `).join('');
         }
 
-        // 视频播放
+        // 播放视频
         function playVideo(filename) {
             const player = document.getElementById('videoPlayer');
             player.src = filename;
@@ -423,11 +433,12 @@
             }
         }
 
-        // 通用模态框控制
+        // 显示模态框
         function showModal(id) {
             document.getElementById(id).style.display = 'flex';
         }
 
+        // 关闭模态框
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
             if(id === 'videoModal') {
