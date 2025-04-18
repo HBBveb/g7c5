@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班级多媒体库｜认证访问</title>
+    <title>The G7C5 PHOTOS5</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -184,10 +184,10 @@
 <body>
     <div class="auth-container">
         <h2 style="text-align:center;margin-bottom:2rem;">
-            <i class="fas fa-lock"></i> 班级多媒体库
+            <i class="fas fa-lock"></i> 是我们班的吗
         </h2>
         <div class="auth-form">
-            <input type="password" id="authCode" class="auth-input" placeholder="请输入访问密码" autocomplete="off">
+            <input type="password" id="authCode" class="auth-input" placeholder="请输入学号前9位" autocomplete="off">
             <button class="auth-button" onclick="checkAuth()">
                 <i class="fas fa-unlock-alt"></i> 立即验证
             </button>
@@ -299,9 +299,10 @@
             try {
                 // 模拟数据请求
                 const mockVideos = [
-                    {name: 'video1.mp4'}, {name: 'video2.mp4'}, 
-                    {name: 'video3.mp4'}, {name: 'video4.mp4'},
-                    {name: 'video5.mp4'}, {name: 'video6.mp4'}
+                    {name: '2.mp4'}, {name: '3.mp4'}, 
+                    {name: '5.mp4'}, {name: '4.mp4'},
+                    {name: '6.mp4'}, {name: '7.mp4'},
+                    {name: 'xhw1.mp4'}
                 ];
                 const paginated = paginate(mockVideos, page, CONFIG.videosPerPage);
                 renderVideos(paginated.data);
@@ -318,8 +319,7 @@
             try {
                 // 模拟数据请求
                 const mockBlogs = [
-                    {name: 'blog1.html'}, {name: 'blog2.html'}, 
-                    {name: 'blog3.html'}, {name: 'blog4.html'}
+                    {name: 'blog1.html'}
                 ];
                 const paginated = paginate(mockBlogs, page, CONFIG.blogsPerPage);
                 renderBlogs(paginated.data);
