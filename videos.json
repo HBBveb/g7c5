@@ -1,9 +1,9 @@
 [
-    {"id": 1, "name": "2.mp4"},
-    {"id": 2, "name": "3.mp4"},
-    {"id": 3, "name": "4.mp4"},
-    {"id": 4, "name": "5.mp4"},
-    {"id": 5, "name": "6.mp4"},
-    {"id": 6, "name": "7.mp4"},
-    {"id": 7, "name": "xhw1.mp4"}
+    { "name": "2.mp4"},
+    { "name": "3.mp4"},
+    { "name": "4.mp4"},
+    { "name": "5.mp4"},
+    { "name": "6.mp4"},
+    { "name": "7.mp4"},
+    { "name": "xhw1.mp4"}
 ]
