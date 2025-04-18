@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G7C5 PHOTOS</title>
+    <title>班级影像库｜认证访问</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,106 +12,81 @@
             --secondary-color: #4a4d6d;
             --dark-color: #1a1c2c;
             --light-color: #f8f9fa;
-            --accent-color: #ff6b6b;
-            --shadow-color: rgba(45,45,68,0.1);
             --radius-lg: 16px;
             --radius-sm: 8px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'PingFang SC', system-ui, sans-serif;
+        /* 认证界面样式 */
+        .auth-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        body {
-            background: #f8fafc;
-            min-height: 100vh;
-            line-height: 1.6;
-            color: var(--secondary-color);
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
-        header {
-            background: var(--dark-color);
-            color: white;
-            padding: 1.2rem 0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--primary-gradient);
-        }
-
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
+        .auth-form {
             display: flex;
-            align-items: center;
-            gap: 0.8rem;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
-        .status-container {
-            margin: 2rem 0;
-            padding: 1.5rem;
+        .auth-input {
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
             border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-size: 1.1rem;
-            border-left: 4px solid transparent;
+            font-size: 1rem;
+            transition: var(--transition);
         }
 
-        .loading {
-            background: rgba(67, 97, 238, 0.08);
+        .auth-input:focus {
             border-color: var(--primary-color);
-            color: var(--primary-color);
+            outline: none;
         }
 
-        .error {
-            background: rgba(220, 53, 69, 0.08);
-            border-color: var(--danger-color);
-            color: var(--danger-color);
+        .auth-button {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
         }
 
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.9rem;
+            text-align: center;
+            height: 1.2rem;
+        }
+
+        /* 视频列表样式 */
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 2rem;
-            margin-top: 2rem;
+            padding: 2rem;
         }
 
         .video-card {
             background: white;
             border-radius: var(--radius-lg);
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px var(--shadow-color);
-            transition: var(--transition);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .video-thumbnail {
             height: 200px;
             background: #e2e8f0;
             position: relative;
-            overflow: hidden;
+            cursor: pointer;
         }
 
-        .video-thumbnail canvas {
+        .video-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -124,40 +99,10 @@
         .video-title {
             font-weight: 600;
             color: var(--dark-color);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            margin-bottom: 1rem;
         }
 
-        .video-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.25rem;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            font-weight: 500;
-            flex: 1;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: 0 2px 4px rgba(67, 97, 238, 0.2);
-        }
-
+        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -173,8 +118,8 @@
 
         .modal-content {
             width: 90%;
-            max-width: 900px;
-            background: var(--dark-color);
+            max-width: 800px;
+            background: #000;
             border-radius: var(--radius-lg);
             overflow: hidden;
         }
@@ -182,165 +127,114 @@
         #videoPlayer {
             width: 100%;
             height: 500px;
-            background: #000;
-        }
-
-        .geo-blocked {
-            text-align: center;
-            padding: 4rem 1rem;
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-
-        .geo-error {
-            background: #fff5f5;
-            border: 1px solid #fed7d7;
-            color: #e53e3e;
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            margin: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1.5rem 1rem;
-            }
-
-            #videoPlayer {
-                height: 300px;
-            }
         }
     </style>
 </head>
 <body>
-    <div id="geoBlock" class="geo-blocked" style="display: none;">
-        <div class="geo-error">
-            <h2><i class="fas fa-ban"></i> 访问受限</h2>
-            <p>本内容仅对重庆北碚地区开放</p>
-            <p>错误代码：GEO_LIMIT_401</p>
+    <!-- 认证界面 -->
+    <div class="auth-container">
+        <h2 style="text-align: center; margin-bottom: 2rem;">
+            <i class="fas fa-lock"></i> 班级影像库
+        </h2>
+        <div class="auth-form">
+            <input 
+                type="password" 
+                id="authCode"
+                class="auth-input"
+                placeholder="请输入访问密码"
+                autocomplete="off"
+            >
+            <div class="error-message" id="errorMsg"></div>
+            <button class="auth-button" onclick="checkAuth()">
+                <i class="fas fa-unlock-alt"></i> 进入影像库
+            </button>
         </div>
     </div>
 
-    <div id="mainContent" style="display: none;">
-        <header>
-            <div class="container">
-                <h1><i class="fas fa-camera-retro"></i> G7C5 PHOTOS</h1>
-            </div>
-        </header>
+    <!-- 视频内容容器 -->
+    <div id="contentContainer" style="display: none;">
+        <div class="video-grid" id="videoGrid"></div>
+    </div>
 
-        <main class="container">
-            <div id="statusContainer" class="status-container loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                正在加载精彩瞬间...
-            </div>
-            <div class="video-grid" id="videoGrid"></div>
-        </main>
-
-        <div class="modal" id="videoModal">
-            <div class="modal-content">
-                <video controls id="videoPlayer"></video>
-                <div style="padding: 1rem; text-align: right;">
-                    <button class="btn btn-primary" onclick="closePlayer()">
-                        <i class="fas fa-times"></i> 关闭
-                    </button>
-                </div>
+    <!-- 视频播放器 -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <video controls id="videoPlayer"></video>
+            <div style="padding: 1rem; text-align: right;">
+                <button class="auth-button" onclick="closePlayer()" 
+                    style="background: #333; padding: 0.5rem 1rem;">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // 地理验证
-        async function checkGeoLocation() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                
-                if (data.region === 'Chongqing' && data.city === 'Beibei') {
-                    document.getElementById('mainContent').style.display = 'block';
-                    initialize();
-                } else {
-                    document.getElementById('geoBlock').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('地理验证失败:', error);
-                document.getElementById('geoBlock').style.display = 'block';
+        // 系统配置
+        const AUTH_CODE = '101202705';  // 访问密码
+        let videoList = [];  // 存储视频列表
+
+        // 认证检查
+        function checkAuth() {
+            const input = document.getElementById('authCode');
+            const error = document.getElementById('errorMsg');
+            
+            if (input.value === AUTH_CODE) {
+                loadVideoList();
+                document.querySelector('.auth-container').style.display = 'none';
+                document.getElementById('contentContainer').style.display = 'block';
+            } else {
+                error.textContent = '⚠️ 密码错误，请重新输入';
+                input.value = '';
+                input.focus();
             }
         }
 
-        // 视频处理
-        async function generateThumbnail(videoPath) {
-            return new Promise((resolve, reject) => {
-                const video = document.createElement('video');
-                video.crossOrigin = 'anonymous';
-                video.preload = 'metadata';
-                
-                video.onloadedmetadata = () => {
-                    video.currentTime = 0.1;
-                };
-
-                video.onseeked = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0);
-                    resolve(canvas.toDataURL());
-                };
-
-                video.onerror = reject;
-                video.src = videoPath;
-            });
-        }
-
-        // 应用逻辑
-        const state = {
-            videos: [
-                { id: 1, name: '2.mp4' },
-                { id: 2, name: '3.mp4' },
-                { id: 3, name: '4.mp4' }
-            ]
-        };
-
-        async function initialize() {
+        // 加载视频列表
+        async function loadVideoList() {
             try {
-                const videoGrid = document.getElementById('videoGrid');
+                const response = await fetch('videos.json');
+                if (!response.ok) throw new Error('文件加载失败');
                 
-                for (const video of state.videos) {
-                    const thumbnail = await generateThumbnail(video.name);
-                    
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.innerHTML = `
-                        <div class="video-thumbnail">
-                            <img src="${thumbnail}" alt="${video.name}" style="width:100%;height:100%;object-fit:cover">
-                        </div>
-                        <div class="video-info">
-                            <h3 class="video-title">${video.name.replace('.mp4', '')}</h3>
-                            <div class="video-actions">
-                                <button class="btn btn-primary" onclick="playVideo('${video.name}')">
-                                    <i class="fas fa-play"></i> 播放
-                                </button>
-                                <button class="btn btn-primary" onclick="downloadVideo('${video.name}')">
-                                    <i class="fas fa-download"></i> 下载
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    
-                    videoGrid.appendChild(card);
-                }
+                videoList = await response.json();
+                if (!validateVideoList(videoList)) throw new Error('数据格式错误');
                 
-                document.getElementById('statusContainer').style.display = 'none';
+                renderVideoGrid();
             } catch (error) {
-                console.error('初始化失败:', error);
-                document.getElementById('statusContainer').className = 'status-container error';
-                document.getElementById('statusContainer').innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    内容加载失败，请刷新重试
-                `;
+                alert(`加载失败: ${error.message}`);
             }
         }
 
+        // 数据验证
+        function validateVideoList(list) {
+            return Array.isArray(list) && 
+                list.every(item => 
+                    typeof item.id === 'number' && 
+                    typeof item.name === 'string'
+                );
+        }
+
+        // 渲染视频网格
+        function renderVideoGrid() {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = videoList.map(video => `
+                <div class="video-card">
+                    <div class="video-thumbnail" onclick="playVideo('${video.name}')">
+                        <img src="get-thumbnail.php?video=${encodeURIComponent(video.name)}" 
+                             alt="${video.name}">
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${video.name.replace('.mp4', '')}</div>
+                        <button class="auth-button" onclick="downloadVideo('${video.name}')"
+                            style="background: var(--secondary-color); width: 100%">
+                            <i class="fas fa-download"></i> 下载视频
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 视频播放控制
         function playVideo(filename) {
             const player = document.getElementById('videoPlayer');
             player.src = filename;
@@ -349,12 +243,13 @@
         }
 
         function closePlayer() {
-            document.getElementById('videoModal').style.display = 'none';
             const player = document.getElementById('videoPlayer');
             player.pause();
             player.currentTime = 0;
+            document.getElementById('videoModal').style.display = 'none';
         }
 
+        // 下载功能
         function downloadVideo(filename) {
             const link = document.createElement('a');
             link.href = filename;
@@ -363,9 +258,6 @@
             link.click();
             document.body.removeChild(link);
         }
-
-        // 启动地理验证
-        document.addEventListener('DOMContentLoaded', checkGeoLocation);
     </script>
 </body>
 </html>
