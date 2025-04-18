@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The G7C5 PHOTOS</title>
+    <title>The G7C5 PHOTOS </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -57,7 +57,6 @@
             border: none;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-weight: 500;
             transition: opacity 0.3s;
         }
 
@@ -85,13 +84,11 @@
         .content-section {
             display: none;
             padding: 2rem;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
 
         .content-section.active {
             display: block;
-            opacity: 1;
+            animation: fadeIn 0.3s;
         }
 
         .grid {
@@ -168,10 +165,9 @@
             overflow-y: auto;
         }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: var(--secondary-color);
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         #fullImage {
@@ -179,17 +175,23 @@
             max-height: 80vh;
             object-fit: contain;
         }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+        }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <h2 style="text-align:center;margin-bottom:2rem;">
-            <i class="fas fa-lock"></i> G7C5 PHOTOS
+            <i class="fas fa-lock"></i> 你是我们班的吗
         </h2>
         <div class="auth-form">
-            <input type="password" id="authCode" class="auth-input" placeholder="请输入学号前9位" autocomplete="off">
+            <input type="password" id="authCode" class="auth-input" placeholder="输入学号前9位" autocomplete="off">
             <button class="auth-button" onclick="checkAuth()">
-                <i class="fas fa-unlock-alt"></i> 立即验证
+                <i class="fas fa-unlock-alt"></i> 验证
             </button>
         </div>
     </div>
@@ -217,25 +219,24 @@
         </div>
     </div>
 
+    <!-- 模态框 -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <video controls id="videoPlayer" style="width:100%"></video>
-            <div style="padding:1rem;text-align:right">
-                <button class="auth-button" onclick="closeModal('videoModal')">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
-            </div>
+            <button class="auth-button" onclick="closeModal('videoModal')" 
+                style="margin:1rem;float:right">
+                <i class="fas fa-times"></i> 关闭
+            </button>
         </div>
     </div>
 
     <div class="modal" id="blogModal">
         <div class="modal-content" style="padding:2rem;">
             <div id="blogContent"></div>
-            <div style="text-align:right;margin-top:1rem">
-                <button class="auth-button" onclick="closeModal('blogModal')">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
-            </div>
+            <button class="auth-button" onclick="closeModal('blogModal')" 
+                style="margin-top:1rem;float:right">
+                <i class="fas fa-times"></i> 关闭
+            </button>
         </div>
     </div>
 
@@ -252,9 +253,21 @@
     <script>
         const CONFIG = {
             authCode: '101202705',
-            videosPerPage: 4,
-            blogsPerPage: 3,
-            imagesPerPage: 6
+            perPage: {
+                videos: 4,
+                blogs: 3,
+                images: 6
+            },
+            currentPage: {
+                videos: 1,
+                blogs: 1,
+                images: 1
+            },
+            data: {
+                videos: [],
+                blogs: [],
+                images: []
+            }
         };
 
         function checkAuth() {
@@ -263,12 +276,30 @@
                 document.querySelector('.auth-container').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 initTabs();
-                loadVideos();
+                loadAllData();
             } else {
-                alert('访问密码错误！');
+                alert('密码错误');
                 input.value = '';
                 input.focus();
             }
+        }
+
+        async function loadAllData() {
+            try {
+                await Promise.all([
+                    loadData('videos', 'videos.json'),
+                    loadData('blogs', 'blogs.json'),
+                    loadData('images', 'images.json')
+                ]);
+                showTab('videos');
+            } catch {
+                alert('数据加载失败');
+            }
+        }
+
+        async function loadData(type, url) {
+            const res = await fetch(url);
+            CONFIG.data[type] = await res.json();
         }
 
         function initTabs() {
@@ -279,105 +310,40 @@
                     
                     const tab = btn.dataset.tab;
                     btn.classList.add('active');
-                    document.getElementById(`${tab}Section`).classList.add('active');
-                    
-                    if(tab === 'videos' && !document.getElementById('videoGrid').innerHTML) loadVideos();
-                    if(tab === 'blogs' && !document.getElementById('blogGrid').innerHTML) loadBlogs();
-                    if(tab === 'images' && !document.getElementById('imageGrid').innerHTML) loadImages();
+                    showTab(tab);
                 });
             });
         }
 
-        async function loadVideos(page = 1) {
-            const grid = document.getElementById('videoGrid');
-            grid.innerHTML = '<div class="loading">加载视频中...</div>';
-            try {
-                const res = await fetch('videos.json');
-                const allVideos = await res.json();
-                const paginated = paginate(allVideos, page, CONFIG.videosPerPage);
-                renderVideos(paginated.data);
-                renderPagination('videoPagination', allVideos.length, CONFIG.videosPerPage, page, 'videos');
-            } catch {
-                grid.innerHTML = '<div class="loading">视频加载失败</div>';
-            }
+        function showTab(tab) {
+            document.getElementById(`${tab}Section`).classList.add('active');
+            renderContent(tab);
+            renderPagination(tab);
         }
 
-        async function loadBlogs(page = 1) {
-            const grid = document.getElementById('blogGrid');
-            grid.innerHTML = '<div class="loading">加载博客中...</div>';
-            try {
-                const res = await fetch('blogs.json');
-                const allBlogs = await res.json();
-                const paginated = paginate(allBlogs, page, CONFIG.blogsPerPage);
-                renderBlogs(paginated.data);
-                renderPagination('blogPagination', allBlogs.length, CONFIG.blogsPerPage, page, 'blogs');
-            } catch {
-                grid.innerHTML = '<div class="loading">博客加载失败</div>';
-            }
-        }
+        function renderContent(tab) {
+            const start = (CONFIG.currentPage[tab] - 1) * CONFIG.perPage[tab];
+            const end = start + CONFIG.perPage[tab];
+            const data = CONFIG.data[tab].slice(start, end);
 
-        async function loadImages(page = 1) {
-            const grid = document.getElementById('imageGrid');
-            grid.innerHTML = '<div class="loading">加载图片中...</div>';
-            try {
-                const res = await fetch('images.json');
-                const allImages = await res.json();
-                const paginated = paginate(allImages, page, CONFIG.imagesPerPage);
-                renderImages(paginated.data);
-                renderPagination('imagePagination', allImages.length, CONFIG.imagesPerPage, page, 'images');
-            } catch {
-                grid.innerHTML = '<div class="loading">图片加载失败</div>';
-            }
-        }
-
-        function paginate(items, page, perPage) {
-            const start = (page - 1) * perPage;
-            return {
-                data: items.slice(start, start + perPage),
-                total: items.length
+            const renderers = {
+                videos: renderVideos,
+                blogs: renderBlogs,
+                images: renderImages
             };
+            
+            renderers[tab](data);
         }
 
-        function renderPagination(containerId, total, perPage, currentPage, type) {
-            const totalPages = Math.ceil(total / perPage);
-            const container = document.getElementById(containerId);
-            let html = `
-                <button class="page-item" onclick="changePage('prev', '${type}')" 
-                    ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
-
-            for(let i = 1; i <= totalPages; i++) {
-                html += `<button class="page-item ${i === currentPage ? 'active' : ''}" 
-                         onclick="changePage(${i}, '${type}')">${i}</button>`;
-            }
-
-            html += `
-                <button class="page-item" onclick="changePage('next', '${type}')" 
-                    ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
-
-            container.innerHTML = html;
-        }
-
-        function changePage(action, type) {
-            let newPage = action;
-            if(action === 'prev') newPage = parseInt((type === 'videos' ? CONFIG.currentVideoPage : 
-                type === 'blogs' ? CONFIG.currentBlogPage : CONFIG.currentImagePage)) - 1;
-            if(action === 'next') newPage = parseInt((type === 'videos' ? CONFIG.currentVideoPage : 
-                type === 'blogs' ? CONFIG.currentBlogPage : CONFIG.currentImagePage)) + 1;
-
-            if(type === 'videos') loadVideos(newPage);
-            if(type === 'blogs') loadBlogs(newPage);
-            if(type === 'images') loadImages(newPage);
-        }
-
-        function renderVideos(videos) {
-            document.getElementById('videoGrid').innerHTML = videos.map(video => `
+        function renderVideos(data) {
+            document.getElementById('videoGrid').innerHTML = data.map(video => `
                 <div class="card">
                     <div class="thumbnail" onclick="playVideo('${video.name}')">
                         <img src="thumbnail.php?video=${video.name}" onerror="this.src='fallback.jpg'">
                     </div>
                     <div class="card-content">
                         <h3>${video.name.replace('.mp4', '')}</h3>
-                        <button class="auth-button" onclick="downloadVideo('${video.name}')" 
+                        <button class="auth-button" onclick="downloadFile('${video.name}')" 
                             style="width:100%;margin-top:1rem">
                             <i class="fas fa-download"></i> 下载
                         </button>
@@ -386,8 +352,8 @@
             `).join('');
         }
 
-        function renderBlogs(blogs) {
-            document.getElementById('blogGrid').innerHTML = blogs.map(blog => `
+        function renderBlogs(data) {
+            document.getElementById('blogGrid').innerHTML = data.map(blog => `
                 <div class="card">
                     <div class="thumbnail" onclick="viewBlog('${blog.name}')" style="background:#f0f2f5">
                         <i class="fas fa-file-alt fa-3x" style="color:#666;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></i>
@@ -403,8 +369,8 @@
             `).join('');
         }
 
-        function renderImages(images) {
-            document.getElementById('imageGrid').innerHTML = images.map(img => `
+        function renderImages(data) {
+            document.getElementById('imageGrid').innerHTML = data.map(img => `
                 <div class="card">
                     <div class="thumbnail" onclick="viewImage('${img.name}')">
                         <img src="${img.name}" onerror="this.src='fallback.jpg'" 
@@ -416,7 +382,7 @@
                             <button class="auth-button" onclick="viewImage('${img.name}')" style="flex:1">
                                 <i class="fas fa-expand"></i> 查看
                             </button>
-                            <button class="auth-button" onclick="downloadImage('${img.name}')" 
+                            <button class="auth-button" onclick="downloadFile('${img.name}')" 
                                 style="flex:1;background:var(--secondary-color)">
                                 <i class="fas fa-download"></i> 下载
                             </button>
@@ -424,6 +390,42 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function renderPagination(tab) {
+            const totalPages = Math.ceil(CONFIG.data[tab].length / CONFIG.perPage[tab]);
+            const currentPage = CONFIG.currentPage[tab];
+            const container = document.getElementById(`${tab}Pagination`);
+
+            let html = `
+                <button class="page-item" onclick="changePage('prev', '${tab}')" 
+                    ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
+
+            for(let i = 1; i <= totalPages; i++) {
+                html += `
+                    <button class="page-item ${i === currentPage ? 'active' : ''}" 
+                        onclick="changePage(${i}, '${tab}')">${i}</button>`;
+            }
+
+            html += `
+                <button class="page-item" onclick="changePage('next', '${tab}')" 
+                    ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
+
+            container.innerHTML = html;
+        }
+
+        function changePage(newPage, tab) {
+            if(newPage === 'prev') CONFIG.currentPage[tab]--;
+            else if(newPage === 'next') CONFIG.currentPage[tab]++;
+            else CONFIG.currentPage[tab] = newPage;
+
+            CONFIG.currentPage[tab] = Math.max(1, Math.min(
+                CONFIG.currentPage[tab],
+                Math.ceil(CONFIG.data[tab].length / CONFIG.perPage[tab])
+            ));
+
+            renderContent(tab);
+            renderPagination(tab);
         }
 
         function playVideo(filename) {
@@ -446,6 +448,15 @@
             showModal('imageModal');
         }
 
+        function downloadFile(filename) {
+            const link = document.createElement('a');
+            link.href = filename;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function showModal(id) {
             document.getElementById(id).style.display = 'flex';
         }
@@ -455,24 +466,6 @@
             if(id === 'videoModal') {
                 document.getElementById('videoPlayer').pause();
             }
-        }
-
-        function downloadVideo(filename) {
-            const link = document.createElement('a');
-            link.href = filename;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function downloadImage(filename) {
-            const link = document.createElement('a');
-            link.href = filename;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
