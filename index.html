@@ -17,14 +17,20 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 认证界面样式 */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            font-family: 'Segoe UI', system-ui;
+        }
+
         .auth-container {
             max-width: 400px;
-            margin: 5rem auto;
+            margin: 100px auto;
             padding: 2rem;
             background: white;
             border-radius: var(--radius-lg);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
 
         .auth-form {
@@ -38,12 +44,6 @@
             border: 2px solid #e2e8f0;
             border-radius: var(--radius-sm);
             font-size: 1rem;
-            transition: var(--transition);
-        }
-
-        .auth-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
         }
 
         .auth-button {
@@ -54,20 +54,11 @@
             border-radius: var(--radius-sm);
             cursor: pointer;
             font-weight: 500;
-            transition: var(--transition);
         }
 
-        .error-message {
-            color: #e53e3e;
-            font-size: 0.9rem;
-            text-align: center;
-            height: 1.2rem;
-        }
-
-        /* 视频列表样式 */
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
             padding: 2rem;
         }
@@ -75,8 +66,8 @@
         .video-card {
             background: white;
             border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .video-thumbnail {
@@ -96,13 +87,6 @@
             padding: 1.5rem;
         }
 
-        .video-title {
-            font-weight: 600;
-            color: var(--dark-color);
-            margin-bottom: 1rem;
-        }
-
-        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -110,10 +94,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0,0,0,0.95);
             justify-content: center;
             align-items: center;
-            z-index: 1000;
         }
 
         .modal-content {
@@ -121,7 +104,6 @@
             max-width: 800px;
             background: #000;
             border-radius: var(--radius-lg);
-            overflow: hidden;
         }
 
         #videoPlayer {
@@ -131,129 +113,91 @@
     </style>
 </head>
 <body>
-    <!-- 认证界面 -->
     <div class="auth-container">
-        <h2 style="text-align: center; margin-bottom: 2rem;">
-            <i class="fas fa-lock"></i> 班级影像库
+        <h2 style="text-align:center;margin-bottom:2rem;">
+            <i class="fas fa-lock"></i> 班级影像库认证
         </h2>
         <div class="auth-form">
-            <input 
-                type="password" 
-                id="authCode"
-                class="auth-input"
-                placeholder="请输入访问密码"
-                autocomplete="off"
-            >
-            <div class="error-message" id="errorMsg"></div>
+            <input type="password" id="authCode" class="auth-input" placeholder="请输入认证码">
             <button class="auth-button" onclick="checkAuth()">
-                <i class="fas fa-unlock-alt"></i> 进入影像库
+                <i class="fas fa-unlock"></i> 立即验证
             </button>
         </div>
     </div>
 
-    <!-- 视频内容容器 -->
-    <div id="contentContainer" style="display: none;">
+    <div id="contentContainer" style="display:none;">
         <div class="video-grid" id="videoGrid"></div>
     </div>
 
-    <!-- 视频播放器 -->
     <div class="modal" id="videoModal">
         <div class="modal-content">
             <video controls id="videoPlayer"></video>
-            <div style="padding: 1rem; text-align: right;">
-                <button class="auth-button" onclick="closePlayer()" 
-                    style="background: #333; padding: 0.5rem 1rem;">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
-            </div>
+            <button onclick="closePlayer()" style="margin:1rem;float:right;" class="auth-button">
+                <i class="fas fa-times"></i> 关闭
+            </button>
         </div>
     </div>
 
     <script>
-        // 系统配置
-        const AUTH_CODE = '101202705';  // 访问密码
-        let videoList = [];  // 存储视频列表
+        const AUTH_CODE = '101202705';
 
-        // 认证检查
         function checkAuth() {
-            const input = document.getElementById('authCode');
-            const error = document.getElementById('errorMsg');
-            
-            if (input.value === AUTH_CODE) {
-                loadVideoList();
+            const code = document.getElementById('authCode').value;
+            if(code === AUTH_CODE) {
                 document.querySelector('.auth-container').style.display = 'none';
                 document.getElementById('contentContainer').style.display = 'block';
+                loadVideos();
             } else {
-                error.textContent = '⚠️ 密码错误，请重新输入';
-                input.value = '';
-                input.focus();
+                alert('认证码错误！');
             }
         }
 
-        // 加载视频列表
-        async function loadVideoList() {
+        async function loadVideos() {
             try {
                 const response = await fetch('videos.json');
-                if (!response.ok) throw new Error('文件加载失败');
-                
-                videoList = await response.json();
-                if (!validateVideoList(videoList)) throw new Error('数据格式错误');
-                
-                renderVideoGrid();
+                const videos = await response.json();
+                renderVideos(videos);
             } catch (error) {
-                alert(`加载失败: ${error.message}`);
+                alert('视频加载失败: ' + error.message);
             }
         }
 
-        // 数据验证
-        function validateVideoList(list) {
-            return Array.isArray(list) && 
-                list.every(item => 
-                    typeof item.id === 'number' && 
-                    typeof item.name === 'string'
-                );
-        }
-
-        // 渲染视频网格
-        function renderVideoGrid() {
+        function renderVideos(videos) {
             const grid = document.getElementById('videoGrid');
-            grid.innerHTML = videoList.map(video => `
+            grid.innerHTML = videos.map(video => `
                 <div class="video-card">
                     <div class="video-thumbnail" onclick="playVideo('${video.name}')">
-                        <img src="get-thumbnail.php?video=${encodeURIComponent(video.name)}" 
-                             alt="${video.name}">
+                        <img src="thumbnail.php?video=${video.name}" 
+                             onerror="this.src='fallback.jpg'">
                     </div>
                     <div class="video-info">
-                        <div class="video-title">${video.name.replace('.mp4', '')}</div>
-                        <button class="auth-button" onclick="downloadVideo('${video.name}')"
-                            style="background: var(--secondary-color); width: 100%">
-                            <i class="fas fa-download"></i> 下载视频
+                        <h3>${video.name.replace('.mp4', '')}</h3>
+                        <button onclick="downloadVideo('${video.name}')" class="auth-button">
+                            <i class="fas fa-download"></i> 下载
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 视频播放控制
-        function playVideo(filename) {
+        function playVideo(name) {
             const player = document.getElementById('videoPlayer');
-            player.src = filename;
+            player.src = name;
             document.getElementById('videoModal').style.display = 'flex';
             player.play();
         }
 
         function closePlayer() {
+            document.getElementById('videoModal').style.display = 'none';
             const player = document.getElementById('videoPlayer');
             player.pause();
             player.currentTime = 0;
-            document.getElementById('videoModal').style.display = 'none';
         }
 
-        // 下载功能
-        function downloadVideo(filename) {
+        function downloadVideo(name) {
             const link = document.createElement('a');
-            link.href = filename;
-            link.download = filename;
+            link.href = name;
+            link.download = name;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
